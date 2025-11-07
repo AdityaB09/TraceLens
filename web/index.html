@@ -1,34 +1,47 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>TraceLens</title>
     <style>
+      /* THEME TOKENS */
       :root {
         --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb;
         --brand:#22d3ee; --accent:#60a5fa; --ring:#334155; --danger:#f87171;
       }
+      html[data-theme="light"]{
+        --bg:#f6f7fb; --panel:#ffffff; --muted:#64748b; --text:#0f172a;
+        --brand:#0ea5e9; --accent:#3b82f6; --ring:#cbd5e1; --danger:#dc2626;
+      }
+
       *{ box-sizing:border-box; }
       html,body,#root{ height:100%; }
       body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.35 system-ui,Segoe UI,Roboto,Helvetica,Arial; }
-      .hdr{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #111827; background:linear-gradient(180deg, #0c1627, #0b1220); position:sticky; top:0; z-index:2;}
-      .brand{ font-weight:800; letter-spacing:.4px; padding:4px 8px; border-radius:10px; background:#0e223a; color:var(--brand);}
-      .badge{ color:var(--muted); font-size:12px; padding:0 6px; border-left:1px solid #1f2937; }
+      .hdr{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #11182722; background:linear-gradient(180deg, #0c162722, transparent); position:sticky; top:0; z-index:2;}
+      .brand{ font-weight:800; letter-spacing:.4px; padding:4px 8px; border-radius:10px; background:#0e223a22; color:var(--brand);}
+      .badge{ color:var(--muted); font-size:12px; padding:0 6px; border-left:1px solid var(--ring); }
       .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-      input, select, button { background:#131c2c; color:var(--text); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; }
+      input, select, button { background:var(--panel); color:var(--text); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; }
+      input,select{ box-shadow:0 1px 0 rgba(0,0,0,.05) inset; }
       button { background:var(--accent); color:#081018; font-weight:700; cursor:pointer; }
-      button.secondary { background:#1f2937; color:var(--text); }
+      button.secondary { background:transparent; color:var(--text); }
+      button.ghost { background:transparent; color:var(--text); border-color:var(--ring); }
       button:disabled{ opacity:.5; cursor:not-allowed; }
       .container{ padding:10px; }
-      .card{ background:var(--panel); border-radius:14px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.28); }
+      .card{ background:var(--panel); border-radius:14px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.12); border:1px solid var(--ring); }
       .grid{ display:grid; grid-template-columns:2fr 1fr; gap:12px; height:calc(100vh - 70px); }
       .kv{ color:var(--muted); }
       .danger{ color:var(--danger); }
+      .switch{ display:inline-flex; align-items:center; gap:6px; }
     </style>
+    <script>
+      // Restore theme ASAP (no flash)
+      (function(){
+        const t = localStorage.getItem('tracelens_theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -6,11 +6,11 @@ import UploadBar from "./components/UploadBar";
 
 type CyNode = { data: { id: string; label: string; deg?: number } };
 type CyEdge = { data: { id: string; source: string; target: string; type: string } };
-
 type RawNode = { id: string; name: string; namespace: string };
 type RawEdge = { source: string; target: string; type: string };
+type Stats = { n: number; e: number; p: number; project?: string };
 
-function toElements(rawNodes: RawNode[], rawEdges: RawEdge[]): { nodes: CyNode[]; edges: CyEdge[]; deg: Record<string, number> } {
+function toElements(rawNodes: RawNode[], rawEdges: RawEdge[]) {
   const nodes: CyNode[] = rawNodes.map(n => ({ data: { id: n.id, label: `${n.namespace}.${n.name}` } }));
   const edges: CyEdge[] = [];
   const deg: Record<string, number> = {};
@@ -20,70 +20,54 @@ function toElements(rawNodes: RawNode[], rawEdges: RawEdge[]): { nodes: CyNode[]
     deg[e.source] = (deg[e.source] || 0) + 1;
     deg[e.target] = (deg[e.target] || 0) + 1;
   }
-  // attach degree to nodes
   for (const n of nodes) n.data.deg = deg[n.data.id] || 0;
-  return { nodes, edges, deg };
+  return { nodes, edges };
 }
 
 export default function App() {
-  // raw full graph
+  // THEME
+  const [theme, setTheme] = useState<"dark" | "light">(
+    (localStorage.getItem("tracelens_theme") as any) || "dark"
+  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("tracelens_theme", theme);
+  }, [theme]);
+
+  // RAW graph (empty until upload)
   const [rawNodes, setRawNodes] = useState<RawNode[]>([]);
   const [rawEdges, setRawEdges] = useState<RawEdge[]>([]);
-  // rendered subset
+  // Rendered subset
   const [elements, setElements] = useState<(CyNode | CyEdge)[]>([]);
-  // selection / module view
+  // Selection / explanation
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<any | null>(null);
   const [explanation, setExplanation] = useState<string | undefined>(undefined);
-
   // UI state
   const [q, setQ] = useState("");
   const [layoutName, setLayoutName] = useState<"concentric" | "cose" | "breadthfirst">("concentric");
   const [maxNodes, setMaxNodes] = useState<number>(350);
-  const [ingestStats, setIngestStats] = useState<{n:number;e:number;p:number}|null>(null);
+  const [stats, setStats] = useState<Stats | null>(null); // shows after upload
 
-  async function reload() {
-    const [n, e] = await Promise.all([getNodes(), getEdges()]);
-    setRawNodes(n);
-    setRawEdges(e);
-    setSelectedId(null);
-    setSelectedModule(null);
-    setExplanation(undefined);
-    // if the backend returns counts on upload, the UploadBar shows them; otherwise compute here
-    setIngestStats({ n: n.length, e: e.length, p: 0 });
-  }
-
-  useEffect(() => { reload(); }, []);
-
-  // recompute the visual subset whenever inputs change
+  // Build elements when inputs change
   useEffect(() => {
-    const { nodes: allNodes, edges: allEdges, deg } = toElements(rawNodes, rawEdges);
+    const { nodes: allNodes, edges: allEdges } = toElements(rawNodes, rawEdges);
 
-    // 1) text filter on nodes
     const term = q.trim().toLowerCase();
-    let nodes = !term
-      ? allNodes
-      : allNodes.filter(n => (n.data.label || "").toLowerCase().includes(term));
-
-    // 2) top-K by degree if exceeding maxNodes
+    let nodes = !term ? allNodes : allNodes.filter(n => (n.data.label || "").toLowerCase().includes(term));
     if (nodes.length > maxNodes) {
-      nodes = nodes
-        .sort((a, b) => (b.data.deg || 0) - (a.data.deg || 0))
-        .slice(0, maxNodes);
+      nodes = nodes.sort((a,b) => (b.data.deg||0) - (a.data.deg||0)).slice(0, maxNodes);
     }
     const nodeIds = new Set(nodes.map(n => n.data.id));
-
-    // 3) keep edges only if **both** endpoints are in nodeIds (prevents Cytoscape “nonexistent target”)
     const edges = allEdges.filter(e => nodeIds.has(e.data.source) && nodeIds.has(e.data.target));
-
     setElements([...nodes, ...edges]);
   }, [rawNodes, rawEdges, q, maxNodes]);
 
-  // fetch selected module details
+  // Grab module details on selection
   useEffect(() => {
     setExplanation(undefined);
     if (!selectedId) { setSelectedModule(null); return; }
-    (async () => { setSelectedModule(await getModule(selectedId)); })();
+    (async () => setSelectedModule(await getModule(selectedId)))();
   }, [selectedId]);
 
   async function handleExplain() {
@@ -92,7 +76,27 @@ export default function App() {
     setExplanation(j.explanation);
   }
 
-  // highlight (for dimming others inside GraphView)
+  // Called after successful upload with counts; then we fetch graph
+  async function handleUploaded(s: Stats) {
+    setStats(s);
+    const [n, e] = await Promise.all([getNodes(), getEdges()]);
+    setRawNodes(n);
+    setRawEdges(e);
+  }
+
+  // reset to 0 nodes again
+  function clearAll() {
+    setRawNodes([]);
+    setRawEdges([]);
+    setElements([]);
+    setQ("");
+    setSelectedId(null);
+    setSelectedModule(null);
+    setExplanation(undefined);
+    setStats(null);
+  }
+
+  // highlight set (for dimming in GraphView)
   const highlightIds = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return new Set<string>();
@@ -107,11 +111,19 @@ export default function App() {
     <>
       <div className="hdr">
         <div className="brand">TraceLens</div>
-        {ingestStats && (
-          <div className="badge">ingested nodes={ingestStats.n}, edges={ingestStats.e}{ingestStats.p?`, packages=${ingestStats.p}`:""}</div>
-        )}
+        <div className="badge">
+          {stats ? `project=${stats.project||"uploaded"} · nodes=${stats.n}, edges=${stats.e}${stats.p?`, packages=${stats.p}`:""}` : "no project loaded"}
+        </div>
+
         <div className="toolbar" style={{ marginLeft: "auto" }}>
-          <UploadBar onUploaded={reload} />
+          <div className="switch">
+            <span style={{color:"var(--muted)"}}>Theme</span>
+            <button className="ghost" onClick={()=>setTheme(theme==="dark"?"light":"dark")}>
+              {theme==="dark" ? "🌙 Dark" : "☀️ Light"}
+            </button>
+          </div>
+          <button className="ghost" onClick={clearAll}>Clear</button>
+          <UploadBar onUploaded={handleUploaded}/>
         </div>
       </div>
 
@@ -122,8 +134,9 @@ export default function App() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             style={{ width: 260 }}
+            disabled={!stats}
           />
-          <button className="secondary" onClick={() => setQ("")}>Reset</button>
+          <button className="secondary" onClick={() => setQ("")} disabled={!stats}>Reset</button>
 
           <span className="badge">Max nodes</span>
           <input
@@ -135,26 +148,33 @@ export default function App() {
             onChange={(e) => setMaxNodes(Math.max(50, Math.min(2000, Number(e.target.value) || 50)))}
             style={{ width: 90 }}
             title="Show top-degree nodes up to this limit"
+            disabled={!stats}
           />
 
           <span className="badge">Layout</span>
-          <select value={layoutName} onChange={(e) => setLayoutName(e.target.value as any)}>
+          <select value={layoutName} onChange={(e) => setLayoutName(e.target.value as any)} disabled={!stats}>
             <option value="concentric">concentric (clear)</option>
             <option value="cose">cose (force)</option>
             <option value="breadthfirst">breadthfirst (tree-ish)</option>
           </select>
 
-          <button onClick={handleExplain} disabled={!selectedId}>Explain selected</button>
+          <button onClick={handleExplain} disabled={!stats || !selectedId}>Explain selected</button>
         </div>
 
         <div className="grid">
           <div className="card">
-            <GraphView
-              elements={elements}
-              highlightIds={highlightIds}
-              layoutName={layoutName}
-              onSelectNode={(id) => setSelectedId(id)}
-            />
+            {stats ? (
+              <GraphView
+                elements={elements}
+                highlightIds={highlightIds}
+                layoutName={layoutName}
+                onSelectNode={(id) => setSelectedId(id)}
+              />
+            ) : (
+              <div style={{height:"100%",display:"grid",placeItems:"center",color:"var(--muted)"}}>
+                Upload a ZIP to generate the graph.
+              </div>
+            )}
           </div>
           <div className="card">
             <ModulePanel
