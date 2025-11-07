@@ -2,19 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>TraceLens</title>
     <style>
-      html,body,#root{height:100%}
-      body{margin:0;font:14px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial;background:#0b1220;color:#e5e7eb}
-      .panel{background:#111827;border-radius:12px;padding:12px}
-      .row{display:grid;grid-template-columns:2fr 1fr;gap:12px;height:calc(100% - 70px)}
-      .toolbar{display:flex;gap:8px;margin-bottom:10px}
-      input[type="text"]{background:#1f2937;border:1px solid #334155;border-radius:8px;color:#e5e7eb;padding:8px}
-      button{background:#60a5fa;border:none;color:#081018;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
-      .list{max-height:200px;overflow:auto}
-      .kv{font-size:12px;color:#93a3b8}
-      .danger{color:#fda4af}
+      :root {
+        --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb;
+        --brand:#22d3ee; --accent:#60a5fa; --ring:#334155; --danger:#f87171;
+      }
+      *{ box-sizing:border-box; }
+      html,body,#root{ height:100%; }
+      body{ margin:0; background:var(--bg); color:var(--text); font:14px/1.35 system-ui,Segoe UI,Roboto,Helvetica,Arial; }
+      .hdr{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid #111827; background:linear-gradient(180deg, #0c1627, #0b1220); position:sticky; top:0; z-index:2;}
+      .brand{ font-weight:800; letter-spacing:.4px; padding:4px 8px; border-radius:10px; background:#0e223a; color:var(--brand);}
+      .badge{ color:var(--muted); font-size:12px; padding:0 6px; border-left:1px solid #1f2937; }
+      .toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+      input, select, button { background:#131c2c; color:var(--text); border:1px solid var(--ring); border-radius:10px; padding:6px 10px; }
+      button { background:var(--accent); color:#081018; font-weight:700; cursor:pointer; }
+      button.secondary { background:#1f2937; color:var(--text); }
+      button:disabled{ opacity:.5; cursor:not-allowed; }
+      .container{ padding:10px; }
+      .card{ background:var(--panel); border-radius:14px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.28); }
+      .grid{ display:grid; grid-template-columns:2fr 1fr; gap:12px; height:calc(100vh - 70px); }
+      .kv{ color:var(--muted); }
+      .danger{ color:var(--danger); }
     </style>
   </head>
   <body>

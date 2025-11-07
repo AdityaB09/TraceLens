@@ -11,6 +11,8 @@ public class LlmService
     private readonly string _key;
     private readonly string _model;
 
+    public bool HasReal => !string.IsNullOrWhiteSpace(_key);
+    
     public LlmService(HttpClient http)
     {
         _http = http;
