@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TraceLens.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5d9ca3bbf4d5136145655414f2eecef20e429038")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+344cf10a0f2debf73c428a3a343b3769db46c805")]
 [assembly: System.Reflection.AssemblyProductAttribute("TraceLens.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TraceLens.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
