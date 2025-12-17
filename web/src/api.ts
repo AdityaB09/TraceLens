@@ -1,7 +1,7 @@
 
 // Resolve API base URL; can be overridden via VITE_API_URL
 export const api: string =
-  (import.meta as any).env?.VITE_API_URL ?? "http://localhost:8080";
+  (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8080";
 
 // Helpers you may reuse
 export async function getNodes() {
